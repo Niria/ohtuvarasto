@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Warehouse Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Your Warehouses</h2>
+
+    {% if warehouses %}
+    <ul class="warehouse-list">
+        {% for id, warehouse in warehouses.items() %}
+        <li class="warehouse-item">
+            <div>
+                <a href="{{ url_for('view_warehouse', warehouse_id=id) }}">
+                    {{ warehouse.name }}
+                </a>
+                <div class="warehouse-info">
+                    Balance: {{ warehouse.varasto.saldo|round(2) }} /
+                    {{ warehouse.varasto.tilavuus|round(2) }}
+                </div>
+            </div>
+            <a href="{{ url_for('view_warehouse', warehouse_id=id) }}"
+               class="btn btn-primary">View</a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <h3>No warehouses yet</h3>
+        <p>Create your first warehouse to get started.</p>
+        <br>
+        <a href="{{ url_for('create_warehouse') }}"
+           class="btn btn-success">Create Warehouse</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if warehouses %}
+<a href="{{ url_for('create_warehouse') }}"
+   class="btn btn-success">Create New Warehouse</a>
+{% endif %}
+{% endblock %}
