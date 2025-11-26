@@ -13,6 +13,14 @@ def get_next_id():
     return warehouse_counter[0]
 
 
+def parse_positive_float(value, default):
+    try:
+        result = float(value)
+        return max(result, 0)
+    except (ValueError, TypeError):
+        return default
+
+
 @app.route('/')
 def index():
     return render_template('index.html', warehouses=warehouses)
@@ -21,19 +29,25 @@ def index():
 @app.route('/warehouse/new', methods=['GET', 'POST'])
 def create_warehouse():
     if request.method == 'POST':
-        name = request.form.get('name', 'Unnamed Warehouse')
-        capacity = float(request.form.get('capacity', 100))
-        initial_balance = float(request.form.get('initial_balance', 0))
-
-        warehouse_id = get_next_id()
-        warehouses[warehouse_id] = {
-            'id': warehouse_id,
-            'name': name,
-            'varasto': Varasto(capacity, initial_balance)
-        }
-        return redirect(url_for('index'))
-
+        return handle_create_warehouse()
     return render_template('create_warehouse.html')
+
+
+def handle_create_warehouse():
+    name = request.form.get('name', 'Unnamed Warehouse')
+    capacity = parse_positive_float(request.form.get('capacity'), 100)
+    initial_balance = parse_positive_float(
+        request.form.get('initial_balance'), 0
+    )
+    capacity = capacity if capacity > 0 else 100
+
+    warehouse_id = get_next_id()
+    warehouses[warehouse_id] = {
+        'id': warehouse_id,
+        'name': name,
+        'varasto': Varasto(capacity, initial_balance)
+    }
+    return redirect(url_for('index'))
 
 
 @app.route('/warehouse/<int:warehouse_id>')
@@ -62,8 +76,9 @@ def edit_warehouse(warehouse_id):
 def add_to_warehouse(warehouse_id):
     warehouse = warehouses.get(warehouse_id)
     if warehouse:
-        amount = float(request.form.get('amount', 0))
-        warehouse['varasto'].lisaa_varastoon(amount)
+        amount = parse_positive_float(request.form.get('amount'), 0)
+        if amount > 0:
+            warehouse['varasto'].lisaa_varastoon(amount)
     return redirect(url_for('view_warehouse', warehouse_id=warehouse_id))
 
 
@@ -71,8 +86,9 @@ def add_to_warehouse(warehouse_id):
 def remove_from_warehouse(warehouse_id):
     warehouse = warehouses.get(warehouse_id)
     if warehouse:
-        amount = float(request.form.get('amount', 0))
-        warehouse['varasto'].ota_varastosta(amount)
+        amount = parse_positive_float(request.form.get('amount'), 0)
+        if amount > 0:
+            warehouse['varasto'].ota_varastosta(amount)
     return redirect(url_for('view_warehouse', warehouse_id=warehouse_id))
 
 
@@ -84,4 +100,4 @@ def delete_warehouse(warehouse_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
